@@ -48,8 +48,16 @@ echo "- Identified tar file extraction method ($target_ext)."
 
 # - Backup old installations if found
 echo "- Backing up any old ($sym_name) copies to ($backup_dir)..."
-mkdir $backup_dir
-mv $target_dir/*${sym_name}* $backup_dir
+if mkdir $backup_dir; then
+	echo "-- Backup folder created ($backup_dir)."
+else
+	echo "-- Backup folder ($backup_dir) already exists."
+fi
+if mv $target_dir/*${sym_name}* $backup_dir/; then
+	echo "-- Moved old ${sym_name} copies."
+else
+	echo "-- No old ${sym_name} copies found."
+fi
 echo "- Backup complete."
 
 # - Extact tar file
