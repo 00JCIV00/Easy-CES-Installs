@@ -12,6 +12,7 @@ target_dir="/opt"
 sym_name="sceptre"
 sym_full="$target_dir/$sym_name"
 sym_target=""
+sym_internal="/bin/sceptregui"
 backup_dir="$target_dir/${sym_name:0:3}_backup"
 exit_status=0
 
@@ -73,14 +74,23 @@ fi
 
 # - Create Symbolic Link
 echo "- Creating sym link at ($sym_full)..."
-ln -s $sym_target $sym_full
+ln -s ${sym_target}${sym_internal} $sym_full
 echo "- Created sym link."
 
-# Finalize
+# - Check PATH for /opt
+echo "- Checking if (/opt) is on PATH..."
+if [[ $PATH != *":/opt"* ]]; then
+	PATH="$PATH:/opt"
+	echo "- Added (/opt) to PATH."
+fi
+echo "- Checked for (/opt) on PATH."
+
+# Finalize Installation
 completion="complete!"
 if [ $exit_status == 1 ]; then
 	completion="failed."
 fi
 echo "Installation of '$file' $completion"
+echo "Current version: $($sym_name --version)"
 exit $exit_status
 
