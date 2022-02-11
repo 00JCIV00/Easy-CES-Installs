@@ -85,21 +85,24 @@ echo "- Created sym link."
 # - Check PATH for Target Directory
 echo "- Checking if '$target_dir' is on PATH '$PATH'..."
 addToPath () {
-	cur_bash=$(find $1/ -name "$bashrc")
-	echo "Current bashrc: $cur_bash"
-	if [ ! "$(grep $target_dir $cur_bash)" ]; then
-		echo "-- No '${target_dir}' on PATH for '$1'. Adding..."
-		echo "export PATH=$PATH:${target_dir}" >> $cur_bash
-		source $cur_bash
-	fi
-	if [[ $PATH != *":${target_dir}"* ]]; then
-		echo "-- Add failed."
-		exit_status=1
-	else
-		echo "-- Added '$target_dir' to file '$cur_bash' PATH '$PATH'."
+	cur_bashrc=$(find $1 -maxdepth 1 -name "$bashrc" -type f)
+	path_add="export PATH=$PATH:${target_dir}"	
+	if [ ! "$(grep "export PATH=" $cur_bashrc | grep "${target_dir}")" ]; then
+		echo "-- No '${target_dir}' on PATH for '$cur_bashrc'. Adding..."
+		echo $path_add >> $cur_bashrc
+		source $cur_bashrc
+		if [[ $PATH != *":${target_dir}"* ]]; then
+			echo "-- Add failed."
+			exit_status=1
+		else
+			echo "-- Added '$target_dir' to file '$cur_bashrc' PATH '$PATH'."
+		fi	
+	else 
+		echo "-- Found '${target_dir}' on PATH for '$cur_bashrc'."
 	fi
 }
-addToPath ~
+addToPath /etc/
+addToPath ~/
 for dir in /home/*/; do
 	addToPath $dir
 done
@@ -110,12 +113,19 @@ echo "- Checked for '$target_dir' on PATH."
 completion="complete!"
 if [ $exit_status == 1 ]; then
 	completion="failed."
+else
+	echo "- Removing old copies of '$sym_name'..."
+	if rm -rf $backup_dir >/dev/null 2>/dev/null; then
+		echo "- Removed old copies of '$sym_name'."
+	else
+		echo "- Failed to remove old copies of '$sym_name'. (Possibly due to a fresh install with no backups.)"
+	fi
+
+	echo "Current version: $($sym_name --version)"
+	echo "Runnable with command: ${sym_name}"
+      	echo "(May require a new terminal for PATH changes to take effect.)"
 fi
 echo "Installation of '$file' $completion"
 
-if [ $exit_status == 0 ]; then
-	echo "Current version: $($sym_name --version)"
-	echo "Runnable with command: ${sym_name}"
-fi
 exit $exit_status
 
